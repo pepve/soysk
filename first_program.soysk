@@ -1,0 +1,12 @@
+total := 0;
+
+i := 0;
+loop {
+    if (i == 10) {
+        break;
+    }
+    total := sum(total, i);
+    i := sum(i, 1);
+}
+
+print(total);
