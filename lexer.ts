@@ -10,7 +10,7 @@ export function lexer(text: string): Token[] {
     let i = 0;
 
     while (i < text.length) {
-        if (/[ \t\n]/.test(text[i])) {
+        if (/[ \t\r\n]/.test(text[i])) {
             i++;
         } else if (/[a-z]/.test(text[i])) {
             const start = i;
