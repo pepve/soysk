@@ -23,7 +23,7 @@ export class Parser {
         }
     }
 
-    private statements(toplevel: boolean) {
+    private statements(toplevel: boolean): {}[] {
         const statements = [];
         while (this.i < this.tokens.length) {
             if (this.match('identifier', undefined, 'assignment')) {
@@ -32,6 +32,19 @@ export class Parser {
                 const expression = this.expression();
                 this.expect('semicolon');
                 statements.push({ type: 'assignment', left: identifier, right: expression });
+            } else if (this.match('keyword', 'if')) {
+                this.i++;
+                this.expect('left-paren');
+                const condition = this.expression();
+                this.expect('right-paren');
+                this.expect('left-brace');
+                const block = this.statements(false);
+                statements.push({ type: 'if', condition, block });
+            } else if (this.match('keyword', 'loop')) {
+                this.i++;
+                this.expect('left-brace');
+                const block = this.statements(false);
+                statements.push({ type: 'loop', block });
             } else if (this.match('keyword', 'break')) {
                 this.i++;
                 this.expect('semicolon');
@@ -51,7 +64,34 @@ export class Parser {
     }
 
     private expression() {
-        if (this.match('identifier')) {
+        const left = this.subExpression();
+        if (!this.match('equals')) {
+            return left;
+        }
+        this.i++;
+        const right = this.subExpression();
+        return { type: 'equals', left, right };
+    }
+
+    private subExpression(): {} {
+        if (this.match('identifier', undefined, 'left-paren')) {
+            const identifier = this.tokens[this.i].value;
+            this.i++;
+            const args = [];
+            this.expect('left-paren');
+            while (true) {
+                if (this.match('right-paren')) {
+                    break;
+                }
+                args.push(this.expression());
+                if (this.match('right-paren')) {
+                    break;
+                }
+                this.expect('comma');
+            }
+            this.i++;
+            return { type: 'function-call', identifier, args };
+        } else if (this.match('identifier')) {
             const identifier = { type: 'identifier', value: this.tokens[this.i].value };
             this.i++;
             return identifier;
