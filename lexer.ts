@@ -18,7 +18,7 @@ export function lexer(text: string): Token[] {
                 i++;
             }
             const str = text.substring(start, i);
-            if (['loop', 'if', 'break'].includes(str)) {
+            if (['loop', 'if', 'break', 'function', 'return'].includes(str)) {
                 tokens.push({ type: 'keyword', name: str });
             } else {
                 tokens.push({ type: 'identifier', value: str });
@@ -46,6 +46,12 @@ export function lexer(text: string): Token[] {
             i++;
         } else if (text[i] === ';') {
             tokens.push({ type: 'semicolon' });
+            i++;
+        } else if (text[i] === '+') {
+            tokens.push({ type: 'add' });
+            i++;
+        } else if (text[i] === '-') {
+            tokens.push({ type: 'subtract' });
             i++;
         } else if (text[i] === ':' && text[i + 1] === '=') {
             tokens.push({ type: 'assignment' });

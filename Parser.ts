@@ -49,6 +49,13 @@ export class Parser {
                 this.i++;
                 this.expect('semicolon');
                 statements.push({ type: 'break' });
+            } else if (this.match('keyword', 'return')) {
+                this.i++;
+                const expression = this.expression();
+                this.expect('semicolon');
+                statements.push({ type: 'return', expression });
+            } else if (toplevel && this.match('keyword', 'function')) {
+                statements.push(this.functionDefinition());
             } else if (!toplevel && this.match('right-brace')) {
                 this.i++;
                 return statements;
@@ -63,34 +70,71 @@ export class Parser {
         return statements;
     }
 
-    private expression() {
-        const left = this.subExpression();
-        if (!this.match('equals')) {
-            return left;
-        }
-        this.i++;
-        const right = this.subExpression();
-        return { type: 'equals', left, right };
-    }
-
-    private subExpression(): {} {
-        if (this.match('identifier', undefined, 'left-paren')) {
-            const identifier = this.tokens[this.i].value;
+    private functionDefinition() {
+        this.expect('keyword', 'function');
+        let identifier;
+        if (this.match('identifier')) {
+            identifier = this.tokens[this.i].value;
             this.i++;
-            const args = [];
-            this.expect('left-paren');
+        } else {
+            throw new Error(`Expected function name but got ${this.tokens[this.i].type}`);
+        }
+        const formals = [];
+        this.expect('left-paren');
+        if (!this.match('right-paren')) {
             while (true) {
-                if (this.match('right-paren')) {
-                    break;
+                if (this.match('identifier')) {
+                    formals.push(this.tokens[this.i].value);
+                    this.i++;
+                } else {
+                    throw new Error(`Expected formal argument but got ${this.tokens[this.i].type}`);
                 }
-                args.push(this.expression());
                 if (this.match('right-paren')) {
                     break;
                 }
                 this.expect('comma');
             }
+        }
+        this.i++;
+        this.expect('left-brace');
+        const body = this.statements(false);
+        return { type: 'function-definition', identifier, formals, body };
+    }
+
+    private expression(): {} {
+        const left = this.subExpression();
+        if (this.match('equals') || this.match('add') || this.match('subtract')) {
+            const type = this.tokens[this.i].type;
             this.i++;
-            return { type: 'function-call', identifier, args };
+            const right = this.expression();
+            return { type, left, right };
+        } else {
+            return left;
+        }
+    }
+
+    private subExpression(): {} {
+        if (this.match('left-paren')) {
+            this.i++;
+            const expression = this.expression();
+            this.expect('right-paren');
+            return expression;
+        } else if (this.match('identifier', undefined, 'left-paren')) {
+            const identifier = this.tokens[this.i].value;
+            this.i++;
+            const actuals = [];
+            this.expect('left-paren');
+            if (!this.match('right-paren')) {
+                while (true) {
+                    actuals.push(this.expression());
+                    if (this.match('right-paren')) {
+                        break;
+                    }
+                    this.expect('comma');
+                }
+            }
+            this.i++;
+            return { type: 'function-call', identifier, actuals };
         } else if (this.match('identifier')) {
             const identifier = { type: 'identifier', value: this.tokens[this.i].value };
             this.i++;

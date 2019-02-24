@@ -21,23 +21,71 @@ describe('Lexer', () => {
 
     it('should tokenize something', () => {
         const tokens = lexer(`
-            total := 0;
+            function fib(n) {
+                if (n == 0) {
+                    return 1;
+                }
+                if (n == 1) {
+                    return 1;
+                }
+                return fib(n - 1) + fib(n - 2);
+            }
 
             i := 0;
             loop {
                 if (i == 10) {
                     break;
                 }
-                total := sum(total, 1);
+                print(i);
+                print(fib(i));
+                i := i + 1;
             }
-
-            print(total);
             `);
         assert.deepEqual(tokens, [
-            { type: 'identifier', value: 'total' },
-            { type: 'assignment' },
+            { type: 'keyword', name: 'function' },
+            { type: 'identifier', value: 'fib' },
+            { type: 'left-paren' },
+            { type: 'identifier', value: 'n' },
+            { type: 'right-paren' },
+            { type: 'left-brace' },
+            { type: 'keyword', name: 'if' },
+            { type: 'left-paren' },
+            { type: 'identifier', value: 'n' },
+            { type: 'equals' },
             { type: 'literal-number', value: 0 },
+            { type: 'right-paren' },
+            { type: 'left-brace' },
+            { type: 'keyword', name: 'return' },
+            { type: 'literal-number', value: 1 },
             { type: 'semicolon' },
+            { type: 'right-brace' },
+            { type: 'keyword', name: 'if' },
+            { type: 'left-paren' },
+            { type: 'identifier', value: 'n' },
+            { type: 'equals' },
+            { type: 'literal-number', value: 1 },
+            { type: 'right-paren' },
+            { type: 'left-brace' },
+            { type: 'keyword', name: 'return' },
+            { type: 'literal-number', value: 1 },
+            { type: 'semicolon' },
+            { type: 'right-brace' },
+            { type: 'keyword', name: 'return' },
+            { type: 'identifier', value: 'fib' },
+            { type: 'left-paren' },
+            { type: 'identifier', value: 'n' },
+            { type: 'subtract' },
+            { type: 'literal-number', value: 1 },
+            { type: 'right-paren' },
+            { type: 'add' },
+            { type: 'identifier', value: 'fib' },
+            { type: 'left-paren' },
+            { type: 'identifier', value: 'n' },
+            { type: 'subtract' },
+            { type: 'literal-number', value: 2 },
+            { type: 'right-paren' },
+            { type: 'semicolon' },
+            { type: 'right-brace' },
             { type: 'identifier', value: 'i' },
             { type: 'assignment' },
             { type: 'literal-number', value: 0 },
@@ -54,22 +102,26 @@ describe('Lexer', () => {
             { type: 'keyword', name: 'break' },
             { type: 'semicolon' },
             { type: 'right-brace' },
-            { type: 'identifier', value: 'total' },
-            { type: 'assignment' },
-            { type: 'identifier', value: 'sum' },
-            { type: 'left-paren' },
-            { type: 'identifier', value: 'total' },
-            { type: 'comma' },
-            { type: 'literal-number', value: 1 },
-            { type: 'right-paren' },
-            { type: 'semicolon' },
-            { type: 'right-brace' },
             { type: 'identifier', value: 'print' },
             { type: 'left-paren' },
-            { type: 'identifier', value: 'total' },
+            { type: 'identifier', value: 'i' },
             { type: 'right-paren' },
             { type: 'semicolon' },
-        ]);
+            { type: 'identifier', value: 'print' },
+            { type: 'left-paren' },
+            { type: 'identifier', value: 'fib' },
+            { type: 'left-paren' },
+            { type: 'identifier', value: 'i' },
+            { type: 'right-paren' },
+            { type: 'right-paren' },
+            { type: 'semicolon' },
+            { type: 'identifier', value: 'i' },
+            { type: 'assignment' },
+            { type: 'identifier', value: 'i' },
+            { type: 'add' },
+            { type: 'literal-number', value: 1 },
+            { type: 'semicolon' },
+            { type: 'right-brace' }]);
     });
 });
 
@@ -117,21 +169,66 @@ describe('Parser', () => {
                 {
                     type: 'function-call',
                     identifier: 'answer',
-                    args: [],
+                    actuals: [],
                 },
                 {
                     type: 'function-call',
                     identifier: 'answer',
-                    args: [
+                    actuals: [
                         { type: 'literal-number', value: 42 },
                     ],
                 },
                 {
                     type: 'function-call',
                     identifier: 'answer',
-                    args: [
+                    actuals: [
                         { type: 'literal-number', value: 45 },
                         { type: 'literal-number', value: 46 },
+                    ],
+                },
+            ],
+        });
+    });
+
+    it('should parse simple function definitions', () => {
+        const ast = (new Parser(lexer('function simple() {}'))).parse();
+        assert.deepEqual(ast, {
+            type: 'program',
+            statements: [
+                {
+                    type: 'function-definition',
+                    identifier: 'simple',
+                    formals: [],
+                    body: [],
+                },
+            ],
+        });
+    });
+
+    it('should parse more complex function definitions', () => {
+        const ast = (new Parser(lexer('function complex(a, b) { if (a) { return b; } return a; }'))).parse();
+        assert.deepEqual(ast, {
+            type: 'program',
+            statements: [
+                {
+                    type: 'function-definition',
+                    identifier: 'complex',
+                    formals: ['a', 'b'],
+                    body: [
+                        {
+                            type: 'if',
+                            condition: { type: 'identifier', value: 'a' },
+                            block: [
+                                {
+                                    type: 'return',
+                                    expression: { type: 'identifier', value: 'b' },
+                                },
+                            ],
+                        },
+                        {
+                            type: 'return',
+                            expression: { type: 'identifier', value: 'a' },
+                        },
                     ],
                 },
             ],
@@ -164,6 +261,33 @@ describe('Parser', () => {
                     block: [
                         { type: 'literal-number', value: 46 },
                     ],
+                },
+            ],
+        });
+    });
+
+    it('should parse more binary operators and parentheses', () => {
+        const ast = (new Parser(lexer('1 - 2 + 3; (1 - 2) + 3;'))).parse();
+        assert.deepEqual(ast, {
+            type: 'program',
+            statements: [
+                {
+                    type: 'subtract',
+                    left: { type: 'literal-number', value: 1 },
+                    right: {
+                        type: 'add',
+                        left: { type: 'literal-number', value: 2 },
+                        right: { type: 'literal-number', value: 3 },
+                    },
+                },
+                {
+                    type: 'add',
+                    left: {
+                        type: 'subtract',
+                        left: { type: 'literal-number', value: 1 },
+                        right: { type: 'literal-number', value: 2 },
+                    },
+                    right: { type: 'literal-number', value: 3 },
                 },
             ],
         });
