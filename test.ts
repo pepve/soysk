@@ -154,8 +154,8 @@ describe('Parser', () => {
             statements: [
                 {
                     type: 'assignment',
-                    left: { type: 'identifier', value: 'answer' },
-                    right: { type: 'literal-number', value: 42 },
+                    identifier: 'answer',
+                    expression: { type: 'literal-number', value: 42 },
                 },
             ],
         });

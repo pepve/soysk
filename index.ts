@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { inspect } from 'util';
+import { checker } from './checker';
 import { lexer } from './lexer';
 import { Parser } from './Parser';
 
@@ -46,7 +47,7 @@ async function runChecker() {
     const text = readFileSync(process.argv[3], 'utf8');
     const tokens = lexer(text);
     const ast = (new Parser(tokens)).parse();
-    // checker(ast);
+    checker(ast);
     console.log(inspect(ast, { depth: Infinity }));
 }
 

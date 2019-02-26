@@ -1,11 +1,11 @@
-import { Token } from "./lexer";
+import { Expression, FunctionDefinition, Identifier, LiteralNumber, Program, Statement, Token } from './common';
 
 export class Parser {
     private i = 0;
 
     public constructor(private tokens: Token[]) { }
 
-    public parse(): {} {
+    public parse(): Program {
         return { type: 'program', statements: this.statements(true) };
     }
 
@@ -23,15 +23,31 @@ export class Parser {
         }
     }
 
-    private statements(toplevel: boolean): {}[] {
-        const statements = [];
+    private currentValueAsString() {
+        if (typeof this.tokens[this.i].value === 'string') {
+            return this.tokens[this.i].value as string;
+        } else {
+            throw new Error(`Internal error, expected ${JSON.stringify(this.tokens[this.i].value)} to be a string`);
+        }
+    }
+
+    private currentValueAsNumber() {
+        if (typeof this.tokens[this.i].value === 'number') {
+            return this.tokens[this.i].value as number;
+        } else {
+            throw new Error(`Internal error, expected ${JSON.stringify(this.tokens[this.i].value)} to be a number`);
+        }
+    }
+
+    private statements(toplevel: boolean): Statement[] {
+        const statements: Statement[] = [];
         while (this.i < this.tokens.length) {
             if (this.match('identifier', undefined, 'assignment')) {
-                const identifier = { type: 'identifier', value: this.tokens[this.i].value };
+                const identifier = this.currentValueAsString();
                 this.i += 2;
                 const expression = this.expression();
                 this.expect('semicolon');
-                statements.push({ type: 'assignment', left: identifier, right: expression });
+                statements.push({ type: 'assignment', identifier, expression });
             } else if (this.match('keyword', 'if')) {
                 this.i++;
                 this.expect('left-paren');
@@ -70,11 +86,11 @@ export class Parser {
         return statements;
     }
 
-    private functionDefinition() {
+    private functionDefinition(): FunctionDefinition {
         this.expect('keyword', 'function');
         let identifier;
         if (this.match('identifier')) {
-            identifier = this.tokens[this.i].value;
+            identifier = this.currentValueAsString();
             this.i++;
         } else {
             throw new Error(`Expected function name but got ${this.tokens[this.i].type}`);
@@ -84,7 +100,7 @@ export class Parser {
         if (!this.match('right-paren')) {
             while (true) {
                 if (this.match('identifier')) {
-                    formals.push(this.tokens[this.i].value);
+                    formals.push(this.currentValueAsString());
                     this.i++;
                 } else {
                     throw new Error(`Expected formal argument but got ${this.tokens[this.i].type}`);
@@ -101,10 +117,10 @@ export class Parser {
         return { type: 'function-definition', identifier, formals, body };
     }
 
-    private expression(): {} {
+    private expression(): Expression {
         const left = this.subExpression();
         if (this.match('equals') || this.match('add') || this.match('subtract')) {
-            const type = this.tokens[this.i].type;
+            const type = this.tokens[this.i].type as 'equals' | 'add' | 'subtract';
             this.i++;
             const right = this.expression();
             return { type, left, right };
@@ -113,14 +129,14 @@ export class Parser {
         }
     }
 
-    private subExpression(): {} {
+    private subExpression(): Expression {
         if (this.match('left-paren')) {
             this.i++;
             const expression = this.expression();
             this.expect('right-paren');
             return expression;
         } else if (this.match('identifier', undefined, 'left-paren')) {
-            const identifier = this.tokens[this.i].value;
+            const identifier = this.currentValueAsString();
             this.i++;
             const actuals = [];
             this.expect('left-paren');
@@ -136,11 +152,11 @@ export class Parser {
             this.i++;
             return { type: 'function-call', identifier, actuals };
         } else if (this.match('identifier')) {
-            const identifier = { type: 'identifier', value: this.tokens[this.i].value };
+            const identifier: Identifier = { type: 'identifier', value: this.currentValueAsString() };
             this.i++;
             return identifier;
         } else if (this.match('literal-number')) {
-            const literal = { type: 'literal-number', value: this.tokens[this.i].value };
+            const literal: LiteralNumber = { type: 'literal-number', value: this.currentValueAsNumber() };
             this.i++;
             return literal;
         } else {

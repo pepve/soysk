@@ -1,9 +1,4 @@
-
-export interface Token {
-    type: string;
-    name?: string;
-    value?: string | number;
-}
+import { Token } from './common';
 
 export function lexer(text: string): Token[] {
     const tokens = [];
