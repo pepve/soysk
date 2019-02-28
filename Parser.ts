@@ -1,4 +1,12 @@
-import { Expression, FunctionDefinition, Identifier, LiteralNumber, Program, Statement, Token } from './common';
+import {
+    Expression,
+    FunctionDefinition,
+    Identifier,
+    LiteralNumber,
+    Program,
+    Statement,
+    Token,
+} from './common';
 
 export class Parser {
     private i = 0;

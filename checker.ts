@@ -1,56 +1,67 @@
-import { Expression, never, Program, Statement } from './common';
+import {
+    Expression,
+    never,
+    Program,
+    Statement,
+} from './common';
+
+interface State {
+    inLoop: boolean;
+}
 
 export function checker(ast: Program) {
     if (ast.type !== 'program') {
         throw new Error(`Internal error, expected program but got ${ast.type}`);
     }
-    checkStatements(ast.statements);
+    const state: State = {
+        inLoop: false,
+    };
+    checkStatements(state, ast.statements);
 }
 
-function checkStatements(statements: Statement[]) {
+function checkStatements(state: State, statements: Statement[]) {
     for (const statement of statements) {
         switch (statement.type) {
             case 'assignment':
-                checkExpression(statement.expression);
+                checkExpression(state, statement.expression);
                 break;
             case 'if':
-                checkExpression(statement.condition);
-                checkStatements(statement.block);
+                checkExpression(state, statement.condition);
+                checkStatements(state, statement.block);
                 break;
             case 'loop':
-                checkStatements(statement.block);
+                checkStatements({ ...state, inLoop: true }, statement.block);
                 break;
             case 'break':
+                if (!state.inLoop) {
+                    throw new Error('Unexpected break');
+                }
                 break;
             case 'return':
-                checkExpression(statement.expression);
+                checkExpression(state, statement.expression);
                 break;
             case 'function-definition':
-                checkStatements(statement.body);
                 break;
             default:
-                checkExpression(statement);
+                checkExpression(state, statement);
         }
     }
 }
 
-function checkExpression(expression: Expression) {
+function checkExpression(state: State, expression: Expression) {
     switch (expression.type) {
         case 'equals':
-            checkExpression(expression.left);
-            checkExpression(expression.right);
+            checkExpression(state, expression.right);
             break;
         case 'add':
-            checkExpression(expression.left);
-            checkExpression(expression.right);
+            checkExpression(state, expression.right);
             break;
         case 'subtract':
-            checkExpression(expression.left);
-            checkExpression(expression.right);
+            checkExpression(state, expression.right);
             break;
         case 'function-call':
             for (const actual of expression.actuals) {
-                checkExpression(actual);
+                checkExpression(state, actual);
             }
             break;
         case 'identifier':
