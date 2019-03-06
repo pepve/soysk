@@ -10,9 +10,6 @@ interface State {
 }
 
 export function checker(ast: Program) {
-    if (ast.type !== 'program') {
-        throw new Error(`Internal error, expected program but got ${ast.type}`);
-    }
     const state: State = {
         inLoop: false,
     };

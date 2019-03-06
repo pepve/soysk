@@ -6,9 +6,10 @@
         "lexer": "node index.js lexer",
         "parser": "node index.js parser",
         "checker": "node index.js checker",
+        "clean": "rm *.js *.js.map",
         "build": "tsc && tslint -p .",
         "test": "npm run build && mocha -r source-map-support/register test*.js",
-        "develop": "concurrently 'tsc -w --preserveWatchOutput' 'mocha -w -r source-map-support/register test*.js'"
+        "develop": "tsc && concurrently 'tsc -w --preserveWatchOutput' 'mocha -w -r source-map-support/register test*.js'"
     },
     "license": "MIT",
     "dependencies": {},
