@@ -20,6 +20,7 @@ export interface Assignment {
     type: 'assignment';
     identifier: string;
     expression: Expression;
+    location?: 'global' | 'local';
 }
 
 export interface If {
@@ -61,11 +62,13 @@ export interface FunctionCall {
     type: 'function-call';
     identifier: string;
     actuals: Expression[];
+    location?: 'builtin' | 'user-defined';
 }
 
 export interface Identifier {
     type: 'identifier';
     value: string;
+    location?: 'global' | 'local';
 }
 
 export interface LiteralNumber {
