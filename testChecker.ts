@@ -86,13 +86,33 @@ describe('Checker', () => {
             assert.throws(() => checker(ast), /^Not a function/);
         });
 
-        it('should error when a function is used as a variable', () => {
+        it('should error when a function is used as a global variable', () => {
             const ast = (new Parser(lexer('function simple() {} two := simple + 1;'))).parse();
             assert.throws(() => checker(ast), /^Not a variable/);
         });
 
-        it('should error when a function is used in an assignment', () => {
+        it('should error when a function is used in a global assignment', () => {
             const ast = (new Parser(lexer('function simple() {} simple := 42;'))).parse();
+            assert.throws(() => checker(ast), /^Not a variable/);
+        });
+
+        it('should error when a function is used as a local variable', () => {
+            const ast = (new Parser(lexer('function simple() { two := simple + 1; }'))).parse();
+            assert.throws(() => checker(ast), /^Not a variable/);
+        });
+
+        it('should error when a function is used in a local assignment', () => {
+            const ast = (new Parser(lexer('function simple() { simple := 42; }'))).parse();
+            assert.throws(() => checker(ast), /^Not a variable/);
+        });
+
+        it('should error when a function is used as a local variable in another function', () => {
+            const ast = (new Parser(lexer('function foo() {} function simple() { two := foo + 1; }'))).parse();
+            assert.throws(() => checker(ast), /^Not a variable/);
+        });
+
+        it('should error when a function is used in a local assignment in another function', () => {
+            const ast = (new Parser(lexer('function foo() {} function simple() { foo := 42; }'))).parse();
             assert.throws(() => checker(ast), /^Not a variable/);
         });
 
