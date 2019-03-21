@@ -83,6 +83,16 @@ describe('Parser', () => {
         });
     });
 
+    it('should not parse nested function definitions', () => {
+        const parser = new Parser(lexer('function a() { function b() {} }'));
+        assert.throws(() => parser.parse(), /^Unexpected token/);
+    });
+
+    it('should not parse function definitions in a loop', () => {
+        const parser = new Parser(lexer('loop { function b() {} }'));
+        assert.throws(() => parser.parse(), /^Unexpected token/);
+    });
+
     it('should parse more complex function definitions', () => {
         const ast = (new Parser(lexer('function complex(a, b) { if (a) { return b; } return a; }'))).parse();
         assert.deepEqual(ast, {
