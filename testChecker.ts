@@ -17,7 +17,7 @@ describe('Checker', () => {
         });
     });
 
-    describe.skip('return', () => {
+    describe('return', () => {
         it('should work in a function', () => {
             const ast = (new Parser(lexer('function simple() { return 1; }'))).parse();
             assert.doesNotThrow(() => checker(ast));
@@ -29,7 +29,7 @@ describe('Checker', () => {
         });
     });
 
-    describe.skip('basic symbol table', () => {
+    describe('basic symbol table', () => {
         it('should error on duplicate function definition', () => {
             const ast = (new Parser(lexer('function foo() {} function foo() {}'))).parse();
             assert.throws(() => checker(ast), /^Function already defined/);
@@ -61,7 +61,7 @@ describe('Checker', () => {
         });
     });
 
-    describe.skip('function scope', () => {
+    describe('function scope', () => {
         it('should not be accessible from the global scope', () => {
             const ast = (new Parser(lexer('function simple() { one := 1; } two := one + 1;'))).parse();
             assert.throws(() => checker(ast), /^Undefined identifier/);
@@ -73,14 +73,14 @@ describe('Checker', () => {
         });
     });
 
-    describe.skip('global scope', () => {
+    describe('global scope', () => {
         it('should be accessible from the function scope', () => {
             const ast = (new Parser(lexer('one := 1; function simple() { two := one + 1; }'))).parse();
             assert.doesNotThrow(() => checker(ast));
         });
     });
 
-    describe.skip('block scope', () => {
+    describe('block scope', () => {
         it('should not exist', () => {
             const ast = (new Parser(lexer('if (1) { one := 1; } two := one + 1;'))).parse();
             assert.doesNotThrow(() => checker(ast));
@@ -92,7 +92,7 @@ describe('Checker', () => {
         });
     });
 
-    describe.skip('basic typing', () => {
+    describe('basic typing', () => {
         it('should error when a variable is called as a function', () => {
             const ast = (new Parser(lexer('one := 1; one();'))).parse();
             assert.throws(() => checker(ast), /^Not a function/);
@@ -149,7 +149,7 @@ describe('Checker', () => {
         });
     });
 
-    describe.skip('builtins', () => {
+    describe('builtins', () => {
         it('should be resolved', () => {
             const ast = (new Parser(lexer('print(1);'))).parse();
             assert.doesNotThrow(() => checker(ast));
