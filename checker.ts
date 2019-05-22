@@ -18,7 +18,7 @@ export function checker(ast: Program) {
         functions: new Map(),
         globals: [],
     };
-    state.functions.set('print', 1);
+    state.functions.set('print', -1);
     checkStatements(state, ast.statements);
 }
 
@@ -27,14 +27,16 @@ function checkStatements(state: State, statements: Statement[]) {
         switch (statement.type) {
             case 'assignment':
                 if (state.locals && state.locals.includes(statement.identifier)) {
-                    // Already in local scope
+                    statement.location = 'local';
                 } else if (state.globals.includes(statement.identifier)) {
-                    // Already in global scope
+                    statement.location = 'global';
                 } else if (state.functions.has(statement.identifier)) {
                     throw new Error(`Not a variable: ${statement.identifier}`);
                 } else if (state.locals) {
+                    statement.location = 'local';
                     state.locals.push(statement.identifier);
                 } else {
+                    statement.location = 'global';
                     state.globals.push(statement.identifier);
                 }
                 checkExpression(state, statement.expression);
@@ -96,19 +98,21 @@ function checkExpression(state: State, expression: Expression) {
                 throw new Error(`Not a function: ${expression.identifier}`);
             } else if (!state.functions.has(expression.identifier)) {
                 throw new Error(`Undefined function: ${expression.identifier}`);
-            } else if (state.functions.get(expression.identifier) !== expression.actuals.length) {
+            } else if (Math.abs(state.functions.get(expression.identifier)!) !== expression.actuals.length) {
                 throw new Error(`Wrong number of arguments: for ${expression.identifier}, ` +
-                    `expected ${state.functions.get(expression.identifier)} but got ${expression.actuals.length}`);
+                    `expected ${Math.abs(state.functions.get(expression.identifier)!)} ` +
+                    `but got ${expression.actuals.length}`);
             }
+            expression.location = state.functions.get(expression.identifier)! < 0 ? 'builtin' : 'user-defined';
             for (const actual of expression.actuals) {
                 checkExpression(state, actual);
             }
             break;
         case 'identifier':
             if (state.locals && state.locals.includes(expression.value)) {
-                // Resolved in local scope
+                expression.location = 'local';
             } else if (state.globals.includes(expression.value)) {
-                // Resolved in global scope
+                expression.location = 'global';
             } else if (state.functions.has(expression.value)) {
                 throw new Error(`Not a variable: ${expression.value}`);
             } else {
